@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "827612575174",
+    "project_id": "notificationandroidkotlin",
+    "storage_bucket": "notificationandroidkotlin.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:827612575174:android:8228beee88b5ed14d1aec7",
+        "android_client_info": {
+          "package_name": "com.example.android.eggtimernotifications"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "827612575174-m1cb0kk9tr95fojrunrh1g8jpjhtshbm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAq-l4OMwc6x3UgBNGEiZvcs4HQlyLaRbo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "827612575174-m1cb0kk9tr95fojrunrh1g8jpjhtshbm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:827612575174:android:498cad9dd0d2b650d1aec7",
+        "android_client_info": {
+          "package_name": "com.udacity.project4"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "827612575174-m1cb0kk9tr95fojrunrh1g8jpjhtshbm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAq-l4OMwc6x3UgBNGEiZvcs4HQlyLaRbo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "827612575174-m1cb0kk9tr95fojrunrh1g8jpjhtshbm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
