@@ -4,8 +4,6 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 import android.Manifest
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
-import android.app.Activity
-import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.content.res.Resources
@@ -17,7 +15,7 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
-import com.google.android.gms.common.api.ApiException
+import androidx.fragment.app.FragmentTransaction
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -33,6 +31,7 @@ import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
+
 private const val TAG = "SelectLocationFragment"
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
@@ -103,6 +102,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 67) {
             checkDeviceLocationSettings()
+
+        }
+        if (requestCode == 69) {
+            if (grantResults.size > 0 && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                enableMyLocation()
+            }
         }
     }
 
@@ -231,22 +236,22 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     @SuppressLint("MissingPermission")
     private fun enableMyLocation() {
         if (isPermissionGranted()) {
-            map.isMyLocationEnabled = true
+            map.setMyLocationEnabled(true)
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 checkDeviceLocationSettings()
             } else {
                 requestQPermission()
             }
-
         } else {
-            ActivityCompat.requestPermissions(
-                context as Activity,
+            Toast.makeText(context, "Please give background location permission", Toast.LENGTH_LONG).show()
+           this.requestPermissions(
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 69
-            )
+           )
         }
         map.moveCamera(CameraUpdateFactory.zoomIn())
     }
+
     @TargetApi(Build.VERSION_CODES.Q)
     private fun requestQPermission() {
         val hasForegroundPermission = ActivityCompat.checkSelfPermission(
@@ -262,12 +267,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             if (hasBackgroundPermission) {
                 checkDeviceLocationSettings()
             } else {
-                ActivityCompat.requestPermissions(
-                    activity!!,
+                this.requestPermissions(
                     arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
                     67
                 )
             }
+        }else{
+            Toast.makeText(context, "Please give foreground permission", Toast.LENGTH_LONG).show()
         }
     }
 }

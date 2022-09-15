@@ -1,8 +1,12 @@
 package com.udacity.project4.locationreminders.savereminder
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
@@ -10,6 +14,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.location.LocationManagerCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.findNavController
 import com.google.android.gms.location.Geofence
@@ -92,7 +98,7 @@ class SaveReminderFragment : BaseFragment() {
         _viewModel.onClear()
     }
 
-    @SuppressLint("MissingPermission")
+
     private fun addGeofence(latLng: LatLng,
                             geofenceId: String) {
         val geofence = Geofence.Builder()
@@ -123,15 +129,45 @@ class SaveReminderFragment : BaseFragment() {
 
         val client = LocationServices.getGeofencingClient(requireContext())
 
-        client.addGeofences(request, pendingIntent)?.run {
-            addOnSuccessListener {
-                Log.d(TAG, "Added geofence. Reminder has id $geofenceId .")
-            }
-            addOnFailureListener { e ->
-                val errorMessage: String? = e.localizedMessage
+        if (ActivityCompat.checkSelfPermission(
+                activity!!,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+
+            if(ActivityCompat.checkSelfPermission(
+                    activity!!,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED){
+                if(isLocationEnabled(activity!!)){
+                    client.addGeofences(request, pendingIntent)?.run {
+                        addOnSuccessListener {
+                            Log.d(TAG, "Added geofence. Reminder has id $geofenceId .")
+                        }
+                        addOnFailureListener { e ->
+                            val errorMessage: String? = e.localizedMessage
+                            Toast.makeText(context, "Please give background location permission", Toast.LENGTH_LONG).show()
+                            Log.d(TAG, "fail in creating geofence: $errorMessage")
+                        }
+                    }
+                }else{
+                    Toast.makeText(context, "Please enable device location ", Toast.LENGTH_LONG).show()
+                }
+            }else{
                 Toast.makeText(context, "Please give background location permission", Toast.LENGTH_LONG).show()
-                Log.d(TAG, "fail in creating geofence: $errorMessage")
             }
+        }else{
+            Toast.makeText(context, "Please give access location permission", Toast.LENGTH_LONG).show()
+            this.requestPermissions(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                69
+            )
         }
+
+    }
+
+    private fun isLocationEnabled(context: Context): Boolean {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return LocationManagerCompat.isLocationEnabled(locationManager)
     }
 }
