@@ -4,7 +4,7 @@ import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.local.RemindersDao
 
 
-class FakeReminderDao : RemindersDao {
+class ReminderDao : RemindersDao {
 
     var shouldReturnError = false
 

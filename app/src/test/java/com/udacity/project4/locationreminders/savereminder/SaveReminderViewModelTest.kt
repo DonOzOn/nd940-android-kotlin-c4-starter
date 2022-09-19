@@ -17,7 +17,9 @@ import org.junit.runner.RunWith
 import org.koin.core.context.stopKoin
 import com.udacity.project4.locationreminders.getOrAwaitValue
 import com.udacity.project4.R
+import org.hamcrest.MatcherAssert
 import org.robolectric.annotation.Config
+import java.util.*
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
@@ -39,7 +41,7 @@ class SaveReminderViewModelTest {
     private val list = listOf(ReminderDataItem("title",
         "description",
         "location",(-360..360).random().toDouble(),
-        (-360..360).random().toDouble()))
+        (-360..360).random().toDouble(), UUID.randomUUID().toString()))
     private val firstReminder = list[0]
 
 
@@ -59,6 +61,18 @@ class SaveReminderViewModelTest {
         Assert.assertThat(saveReminderViewModel.showLoading.getOrAwaitValue(),
             CoreMatchers.`is`(true))
     }
+
+    @Test
+    fun checkShowLoadingSaveReminders() {
+        fakeDataSource = FakeDataSource()
+        saveReminderViewModel = SaveReminderViewModel(
+            ApplicationProvider.getApplicationContext(),
+            fakeDataSource)
+        saveReminderViewModel.validateAndSaveReminder(firstReminder)
+        Assert.assertThat(saveReminderViewModel.showLoading.getOrAwaitValue(),
+            CoreMatchers.`is`(false))
+    }
+
 
     @Test
     fun check_no_title() {

@@ -117,6 +117,7 @@ class RemindersListViewModelTest {
 
     @Test
     fun check_loading() {
+
         fakeDataSource = FakeDataSource(mutableListOf())
         reminderListViewModel = RemindersListViewModel(
             ApplicationProvider.getApplicationContext(),
@@ -126,6 +127,19 @@ class RemindersListViewModelTest {
         MatcherAssert.assertThat(
             reminderListViewModel.showLoading.getOrAwaitValue(),
             CoreMatchers.`is`(true)
+        )
+    }
+
+    @Test
+    fun checkShowLoadingloadReminders() {
+        fakeDataSource = FakeDataSource(mutableListOf(reminder1, reminder2, reminder3, reminder4, reminder5))
+        reminderListViewModel = RemindersListViewModel(
+            ApplicationProvider.getApplicationContext(),
+            fakeDataSource)
+        reminderListViewModel.loadReminders()
+        MatcherAssert.assertThat(
+            reminderListViewModel.showLoading.getOrAwaitValue(),
+            CoreMatchers.`is`(false)
         )
     }
 

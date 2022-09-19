@@ -3,7 +3,7 @@ package com.udacity.project4.locationreminders.data.local
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
-import com.udacity.project4.FakeReminderDao
+import com.udacity.project4.ReminderDao
 import com.udacity.project4.MainCoroutineRule
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
@@ -15,7 +15,7 @@ import org.hamcrest.CoreMatchers.`is`
 import org.junit.*
 import org.junit.runner.RunWith
 import com.google.common.truth.Truth.assertThat
-
+import com.udacity.project4.locationreminders.data.local.RemindersDao
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
 //Medium Test to test the repository
@@ -37,21 +37,21 @@ var instantExecutorRule = InstantTaskExecutorRule()
     private val reminder1 = reminderList[0]
     private val reminder2 = reminderList[1]
 
-    private lateinit var fakeRemindersDao: FakeReminderDao
+    private lateinit var remindersDao: ReminderDao
     private lateinit var remindersLocalRepository: RemindersLocalRepository
 
     @Before
     fun setup() {
-        fakeRemindersDao = FakeReminderDao()
+        remindersDao = ReminderDao()
         remindersLocalRepository = RemindersLocalRepository(
-            fakeRemindersDao, Dispatchers.Unconfined
+            remindersDao, Dispatchers.Unconfined
         )
     }
 
     @Test
     fun check_save_to_local() = runBlockingTest {
         var tempList = mutableListOf<ReminderDTO>()
-        tempList.addAll(fakeRemindersDao.remindersServiceData.values)
+        tempList.addAll(remindersDao.remindersServiceData.values)
         assertThat(tempList).doesNotContain(reminder1)
         assertThat((remindersLocalRepository.getReminders() as? Result.Success)?.data).doesNotContain(
             reminder1
@@ -65,7 +65,7 @@ var instantExecutorRule = InstantTaskExecutorRule()
         remindersLocalRepository.saveReminder(reminder2)
 
         tempList = mutableListOf()
-        tempList.addAll(fakeRemindersDao.remindersServiceData.values)
+        tempList.addAll(remindersDao.remindersServiceData.values)
         // Then the local sources are called and the cache is updated
         assertThat(tempList).contains(reminder1)
         assertThat(tempList).contains(reminder2)
@@ -79,8 +79,8 @@ var instantExecutorRule = InstantTaskExecutorRule()
     fun check_delete_all_fetch_empty() = runBlockingTest {
         assertThat((remindersLocalRepository.getReminders() as? Result.Success)?.data).isEmpty()
 
-        fakeRemindersDao.remindersServiceData[reminder1.id] = reminder1
-        fakeRemindersDao.remindersServiceData[reminder2.id] = reminder2
+        remindersDao.remindersServiceData[reminder1.id] = reminder1
+        remindersDao.remindersServiceData[reminder2.id] = reminder2
 
         // When
         assertThat((remindersLocalRepository.getReminders() as? Result.Success)?.data).isNotEmpty()
@@ -96,7 +96,7 @@ var instantExecutorRule = InstantTaskExecutorRule()
         assertThat((remindersLocalRepository.getReminder(reminder1.id) as? Result.Error)?.message).isEqualTo(
             "Reminder not found!")
 
-        fakeRemindersDao.remindersServiceData[reminder1.id] = reminder1
+        remindersDao.remindersServiceData[reminder1.id] = reminder1
 
         // When
         val loadedReminder = (remindersLocalRepository.getReminder(reminder1.id) as? Result.Success)?.data
