@@ -240,7 +240,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 checkDeviceLocationSettings()
             } else {
-                requestQPermission()
+                //Do nothing
             }
         } else {
             Toast.makeText(context, "Please give background location permission", Toast.LENGTH_LONG).show()
@@ -250,27 +250,5 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
            )
         }
         map.moveCamera(CameraUpdateFactory.zoomIn())
-    }
-
-    @TargetApi(Build.VERSION_CODES.Q)
-    private fun requestQPermission() {
-        val hasForegroundPermission = ActivityCompat.checkSelfPermission(
-            activity!!,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        if (hasForegroundPermission) {
-            val hasBackgroundPermission = ActivityCompat.checkSelfPermission(
-                activity!!,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-            if (hasBackgroundPermission) {
-                checkDeviceLocationSettings()
-            } else {
-                //DO NOTHING
-            }
-        }else{
-            Toast.makeText(context, "Please give foreground permission", Toast.LENGTH_LONG).show()
-        }
     }
 }
