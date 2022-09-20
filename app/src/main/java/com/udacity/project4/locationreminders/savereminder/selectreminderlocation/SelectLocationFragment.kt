@@ -267,10 +267,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             if (hasBackgroundPermission) {
                 checkDeviceLocationSettings()
             } else {
-                this.requestPermissions(
-                    arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
-                    67
-                )
+                //DO NOTHING
             }
         }else{
             Toast.makeText(context, "Please give foreground permission", Toast.LENGTH_LONG).show()

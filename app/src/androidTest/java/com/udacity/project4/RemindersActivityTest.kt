@@ -1,6 +1,8 @@
 package com.udacity.project4
 
 import android.app.Application
+import android.view.View
+import androidx.annotation.StringRes
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.core.app.launchActivity
 import androidx.test.espresso.Espresso.onView
@@ -10,6 +12,7 @@ import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.udacity.project4.locationreminders.RemindersActivity
+import com.udacity.project4.locationreminders.ToastMatcher
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
@@ -36,7 +39,7 @@ class RemindersActivityTest : AutoCloseKoinTest() {
     private lateinit var repository: ReminderDataSource
     private lateinit var appContext: Application
     private val dataBindingIdlingResource = DataBindingIdlingResource()
-
+    private val decorView: View? = null
     /**
      * As we use Koin as a Service Locator Library to develop our code, we'll also use Koin to test our code.
      * at this step we will initialize Koin related code to be able to use it in out testing.
@@ -113,6 +116,77 @@ class RemindersActivityTest : AutoCloseKoinTest() {
         onView(withText("t1")).check(matches(isDisplayed()))
         onView(withText("d1")).check(matches(isDisplayed()))
         onView(withText(R.string.dropped_pin)).check(matches(isDisplayed()))
+        //Modify toast_msg to your own string resource
+        onView(withText(R.string.reminder_saved))
+            .inRoot(ToastMatcher().apply {
+                matches(isDisplayed())
+            });
+//        onView(withText(R.string.err_enter_title))
+//            .check(matches(isDisplayed()));
+//        onView(withText(R.string.err_select_location))
+//            .check(matches(isDisplayed()));
         activityScenario.close()
+    }
+
+    @Test
+    fun check_add_reminder_titleNull() {
+
+        val activityScenario = launchActivity<RemindersActivity>()
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.reminderTitle))
+            .perform(typeText(""), closeSoftKeyboard())
+
+        onView(withId(R.id.reminderDescription))
+            .perform(typeText(""), closeSoftKeyboard())
+
+        onView(withId(R.id.selectLocation)).perform(click())
+
+        onView(withId(R.id.map)).perform(longClick())
+
+
+        Thread.sleep(2000);
+
+        onView(withId(R.id.save_location)).perform(click())
+
+        Thread.sleep(2000);
+
+
+        onView(withId(R.id.saveReminder)).perform(click())
+        onView(withText(R.string.dropped_pin)).check(matches(isDisplayed()))
+        //Modify toast_msg to your own string resource
+        checkSnackBarDisplayedByMessage(R.string.err_enter_title)
+        activityScenario.close()
+    }
+
+    @Test
+    fun check_add_reminder_locationNull() {
+
+        val activityScenario = launchActivity<RemindersActivity>()
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.reminderTitle))
+            .perform(typeText("t1"), closeSoftKeyboard())
+        onView(withText("t1")).check(matches(isDisplayed()))
+
+
+        onView(withId(R.id.reminderDescription))
+            .perform(typeText("d1"), closeSoftKeyboard())
+        onView(withText("d1")).check(matches(isDisplayed()))
+
+        Thread.sleep(2000);
+        onView(withText("t1")).check(matches(isDisplayed()))
+        onView(withText("d1")).check(matches(isDisplayed()))
+        onView(withId(R.id.saveReminder)).perform(click())
+        //Modify toast_msg to your own string resource
+        checkSnackBarDisplayedByMessage(R.string.err_select_location)
+        activityScenario.close()
+    }
+
+    private fun checkSnackBarDisplayedByMessage(@StringRes message: Int) {
+        onView(withText(message))
+            .check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
     }
 }
