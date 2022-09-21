@@ -1,9 +1,13 @@
 package com.udacity.project4.locationreminders.data.local
 
+import androidx.test.espresso.idling.CountingIdlingResource
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 
 /**
  * Concrete implementation of a data source as a db.
@@ -17,16 +21,19 @@ class RemindersLocalRepository(
     private val remindersDao: RemindersDao,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ReminderDataSource {
-
+    var reminderIdlingResource = CountingIdlingResource("reminder")
     /**
      * Get the reminders list from the local db
      * @return Result the holds a Success with all the reminders or an Error object with the error message
      */
     override suspend fun getReminders(): Result<List<ReminderDTO>> = withContext(ioDispatcher) {
+        reminderIdlingResource?.increment()
         return@withContext try {
             Result.Success(remindersDao.getReminders())
         } catch (ex: Exception) {
             Result.Error(ex.localizedMessage)
+        }finally {
+            reminderIdlingResource?.decrement() // Set app as idle.
         }
     }
 
@@ -46,6 +53,7 @@ class RemindersLocalRepository(
      */
     override suspend fun getReminder(id: String): Result<ReminderDTO> = withContext(ioDispatcher) {
         try {
+            reminderIdlingResource?.increment()
             val reminder = remindersDao.getReminderById(id)
             if (reminder != null) {
                 return@withContext Result.Success(reminder)
@@ -54,6 +62,8 @@ class RemindersLocalRepository(
             }
         } catch (e: Exception) {
             return@withContext Result.Error(e.localizedMessage)
+        } finally {
+            reminderIdlingResource?.decrement() // Set app as idle.
         }
     }
 
