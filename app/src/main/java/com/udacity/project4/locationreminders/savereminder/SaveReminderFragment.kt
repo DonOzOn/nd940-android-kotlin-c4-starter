@@ -64,7 +64,7 @@ class SaveReminderFragment : BaseFragment() {
             _viewModel.navigationCommand.value =
                 NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
         }
-        requestQPermission();
+
         binding.saveReminder.setOnClickListener {
             val title = _viewModel.reminderTitle.value
             val description = _viewModel.reminderDescription.value
@@ -75,8 +75,15 @@ class SaveReminderFragment : BaseFragment() {
 //            TODO: use the user entered reminder details to:
 //             1) add a geofencing request
 //             2) save the reminder to the local db
-            val geofenceId = UUID.randomUUID().toString()
+            if(!requestQPermission()){
+                this.requestPermissions(
+                    arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                    67
+                )
+                return@setOnClickListener
+            }
 
+            val geofenceId = UUID.randomUUID().toString()
             if (latitude != null && longitude != null && !TextUtils.isEmpty(title))
                 addGeofence(LatLng(latitude, longitude), geofenceId)
 
@@ -92,6 +99,21 @@ class SaveReminderFragment : BaseFragment() {
                     _viewModel.navigateToReminderList()
                 }
             })
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 69) {
+            if (grantResults.size > 0 && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                // granted
+            }else{
+                Toast.makeText(context, "Please give background location permission", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -175,19 +197,11 @@ class SaveReminderFragment : BaseFragment() {
     }
 
     @TargetApi(Build.VERSION_CODES.Q)
-    private fun requestQPermission() {
+    private fun requestQPermission(): Boolean {
         val hasBackgroundPermission = checkSelfPermission(
             activity!!,
             Manifest.permission.ACCESS_BACKGROUND_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
-        if (hasBackgroundPermission) {
-            //do nothing
-        } else {
-            this.requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
-                67
-            )
-
-        }
+        return hasBackgroundPermission
     }
 }

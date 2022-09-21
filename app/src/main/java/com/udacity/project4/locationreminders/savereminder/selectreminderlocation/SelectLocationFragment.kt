@@ -107,6 +107,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         if (requestCode == 69) {
             if (grantResults.size > 0 && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                 enableMyLocation()
+            }else{
+                Toast.makeText(context, "Please give foreground location permission", Toast.LENGTH_LONG).show()
             }
         }
     }

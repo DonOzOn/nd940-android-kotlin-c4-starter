@@ -116,8 +116,7 @@ class RemindersListViewModelTest {
     }
 
     @Test
-    fun check_loading() {
-
+    fun check_loading() = runBlockingTest {
         fakeDataSource = FakeDataSource(mutableListOf())
         reminderListViewModel = RemindersListViewModel(
             ApplicationProvider.getApplicationContext(),

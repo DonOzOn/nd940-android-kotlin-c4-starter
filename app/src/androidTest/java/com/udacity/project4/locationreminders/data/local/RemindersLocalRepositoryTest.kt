@@ -1,10 +1,16 @@
 package com.udacity.project4.locationreminders.data.local
 
+import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.room.Room
+import androidx.test.InstrumentationRegistry.getTargetContext
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
-import com.udacity.project4.ReminderDao
+import androidx.test.platform.app.InstrumentationRegistry
+import com.google.common.truth.Truth.assertThat
 import com.udacity.project4.MainCoroutineRule
+import com.udacity.project4.ReminderDao
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
 import kotlinx.coroutines.Dispatchers
@@ -14,8 +20,8 @@ import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.`is`
 import org.junit.*
 import org.junit.runner.RunWith
-import com.google.common.truth.Truth.assertThat
-import com.udacity.project4.locationreminders.data.local.RemindersDao
+
+
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
 //Medium Test to test the repository
@@ -25,7 +31,7 @@ class RemindersLocalRepositoryTest {
 //    TODO: Add testing implementation to the RemindersLocalRepository.kt
 @get:Rule
 var instantExecutorRule = InstantTaskExecutorRule()
-
+    private lateinit var database: RemindersDatabase
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
@@ -42,17 +48,16 @@ var instantExecutorRule = InstantTaskExecutorRule()
 
     @Before
     fun setup() {
-        remindersDao = ReminderDao()
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        database = Room.inMemoryDatabaseBuilder(
+            context, RemindersDatabase::class.java).build()
         remindersLocalRepository = RemindersLocalRepository(
-            remindersDao, Dispatchers.Unconfined
+            database.reminderDao(), Dispatchers.Unconfined
         )
     }
 
     @Test
     fun check_save_to_local() = runBlockingTest {
-        var tempList = mutableListOf<ReminderDTO>()
-        tempList.addAll(remindersDao.remindersServiceData.values)
-        assertThat(tempList).doesNotContain(reminder1)
         assertThat((remindersLocalRepository.getReminders() as? Result.Success)?.data).doesNotContain(
             reminder1
         )
@@ -64,11 +69,11 @@ var instantExecutorRule = InstantTaskExecutorRule()
         remindersLocalRepository.saveReminder(reminder1)
         remindersLocalRepository.saveReminder(reminder2)
 
-        tempList = mutableListOf()
-        tempList.addAll(remindersDao.remindersServiceData.values)
-        // Then the local sources are called and the cache is updated
-        assertThat(tempList).contains(reminder1)
-        assertThat(tempList).contains(reminder2)
+//        tempList = mutableListOf()
+//        tempList.addAll(remindersDao.remindersServiceData.values)
+//        // Then the local sources are called and the cache is updated
+//        assertThat(tempList).contains(reminder1)
+//        assertThat(tempList).contains(reminder2)
 
         val result = remindersLocalRepository.getReminders() as? Result.Success
         assertThat(result?.data).contains(reminder1)
@@ -78,10 +83,8 @@ var instantExecutorRule = InstantTaskExecutorRule()
     @Test
     fun check_delete_all_fetch_empty() = runBlockingTest {
         assertThat((remindersLocalRepository.getReminders() as? Result.Success)?.data).isEmpty()
-
-        remindersDao.remindersServiceData[reminder1.id] = reminder1
-        remindersDao.remindersServiceData[reminder2.id] = reminder2
-
+        // When a reminder is saved to the tasks repository
+        remindersLocalRepository.saveReminder(reminder1)
         // When
         assertThat((remindersLocalRepository.getReminders() as? Result.Success)?.data).isNotEmpty()
         remindersLocalRepository.deleteAllReminders()
@@ -96,8 +99,9 @@ var instantExecutorRule = InstantTaskExecutorRule()
         assertThat((remindersLocalRepository.getReminder(reminder1.id) as? Result.Error)?.message).isEqualTo(
             "Reminder not found!")
 
-        remindersDao.remindersServiceData[reminder1.id] = reminder1
-
+//        remindersDao.remindersServiceData[reminder1.id] = reminder1
+        // When a reminder is saved to the tasks repository
+        remindersLocalRepository.saveReminder(reminder1)
         // When
         val loadedReminder = (remindersLocalRepository.getReminder(reminder1.id) as? Result.Success)?.data
 
@@ -118,4 +122,7 @@ var instantExecutorRule = InstantTaskExecutorRule()
         assertThat(message).isEqualTo("Reminder not found!")
 
     }
+
+
+
 }
