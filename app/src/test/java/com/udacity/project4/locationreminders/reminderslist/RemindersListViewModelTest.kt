@@ -18,6 +18,7 @@ import org.koin.core.context.stopKoin
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
 import com.udacity.project4.locationreminders.getOrAwaitValue
+import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.`is`
 import org.robolectric.annotation.Config
 
@@ -116,17 +117,26 @@ class RemindersListViewModelTest {
     }
 
     @Test
-    fun check_loading() = runBlockingTest {
-        fakeDataSource = FakeDataSource(mutableListOf())
+    fun check_loading() = runBlocking {
+        val fakeData = FakeDataSource()
+        fakeData.deleteAllReminders()
+        val reminder = reminderList[1]
+        fakeData.saveReminder(reminder)
         reminderListViewModel = RemindersListViewModel(
             ApplicationProvider.getApplicationContext(),
-            fakeDataSource)
+            fakeData)
         mainCoroutineRule.pauseDispatcher()
         reminderListViewModel.loadReminders()
         MatcherAssert.assertThat(
             reminderListViewModel.showLoading.getOrAwaitValue(),
             CoreMatchers.`is`(true)
         )
+        mainCoroutineRule.resumeDispatcher()
+        MatcherAssert.assertThat(
+            reminderListViewModel.showLoading.getOrAwaitValue(),
+            CoreMatchers.`is`(false)
+        )
+        MatcherAssert.assertThat(reminderListViewModel.showNoData.getOrAwaitValue(), `is`(false))
     }
 
     @Test

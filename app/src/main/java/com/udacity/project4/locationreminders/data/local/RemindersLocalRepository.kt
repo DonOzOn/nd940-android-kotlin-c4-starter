@@ -22,48 +22,59 @@ class RemindersLocalRepository(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ReminderDataSource {
     var reminderIdlingResource = CountingIdlingResource("reminder")
+
+    inline fun <T> wrapEspressoIdlingResource(function: () -> T): T {
+        // Espresso does not work well with coroutines yet. See
+        // https://github.com/Kotlin/kotlinx.coroutines/issues/982
+        reminderIdlingResource.increment() // Set app as busy.
+        return try {
+            function()
+        } finally {
+            reminderIdlingResource.decrement() // Set app as idle.
+        }
+    }
     /**
      * Get the reminders list from the local db
      * @return Result the holds a Success with all the reminders or an Error object with the error message
      */
-    override suspend fun getReminders(): Result<List<ReminderDTO>> = withContext(ioDispatcher) {
-        reminderIdlingResource?.increment()
-        return@withContext try {
-            Result.Success(remindersDao.getReminders())
-        } catch (ex: Exception) {
-            Result.Error(ex.localizedMessage)
-        }finally {
-            reminderIdlingResource?.decrement() // Set app as idle.
+    override suspend fun getReminders(): Result<List<ReminderDTO>> = wrapEspressoIdlingResource {
+        withContext(ioDispatcher) {
+            return@withContext try {
+                Result.Success(remindersDao.getReminders())
+            } catch (ex: Exception) {
+                Result.Error(ex.localizedMessage)
+            }
         }
     }
+
 
     /**
      * Insert a reminder in the db.
      * @param reminder the reminder to be inserted
      */
     override suspend fun saveReminder(reminder: ReminderDTO) =
-        withContext(ioDispatcher) {
-            remindersDao.saveReminder(reminder)
+        wrapEspressoIdlingResource {
+            withContext(ioDispatcher) {
+                remindersDao.saveReminder(reminder)
+            }
         }
-
     /**
      * Get a reminder by its id
      * @param id to be used to get the reminder
      * @return Result the holds a Success object with the Reminder or an Error object with the error message
      */
-    override suspend fun getReminder(id: String): Result<ReminderDTO> = withContext(ioDispatcher) {
-        try {
-            reminderIdlingResource?.increment()
-            val reminder = remindersDao.getReminderById(id)
-            if (reminder != null) {
-                return@withContext Result.Success(reminder)
-            } else {
-                return@withContext Result.Error("Reminder not found!")
+    override suspend fun getReminder(id: String): Result<ReminderDTO> = wrapEspressoIdlingResource {
+        withContext(ioDispatcher) {
+            try {
+                val reminder = remindersDao.getReminderById(id)
+                if (reminder != null) {
+                    return@withContext Result.Success(reminder)
+                } else {
+                    return@withContext Result.Error("Reminder not found!")
+                }
+            } catch (e: Exception) {
+                return@withContext Result.Error(e.localizedMessage)
             }
-        } catch (e: Exception) {
-            return@withContext Result.Error(e.localizedMessage)
-        } finally {
-            reminderIdlingResource?.decrement() // Set app as idle.
         }
     }
 
