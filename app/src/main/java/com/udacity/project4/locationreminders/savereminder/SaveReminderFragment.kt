@@ -3,6 +3,7 @@ package com.udacity.project4.locationreminders.savereminder
 import android.Manifest
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
+import android.app.Activity
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -25,6 +26,7 @@ import androidx.navigation.findNavController
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
@@ -50,6 +52,8 @@ class SaveReminderFragment : BaseFragment() {
         private const val LOCATION_PERMISSION_INDEX = 0
         private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
     }
+
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -88,9 +92,6 @@ class SaveReminderFragment : BaseFragment() {
             val geofenceId = UUID.randomUUID().toString()
             reminderData = ReminderDataItem(title, description, location, latitude, longitude,geofenceId);
 
-//            if (latitude != null && longitude != null && !TextUtils.isEmpty(title))
-//                addGeofence(LatLng(latitude, longitude), geofenceId)
-
           if(_viewModel.validateAndSaveReminder(
                   ReminderDataItem(title, description,
                       location,
@@ -98,13 +99,6 @@ class SaveReminderFragment : BaseFragment() {
               )){
               checkPermissionsAndStartGeofencing()
           }
-
-//            _viewModel.navigateToReminderList.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-//                if(it){
-//                    view.findNavController().navigate(R.id.action_saveReminderFragment_to_reminderListFragment)
-//                    _viewModel.navigateToReminderList()
-//                }
-//            })
         }
     }
 
@@ -134,6 +128,24 @@ class SaveReminderFragment : BaseFragment() {
         } else {
             checkDeviceLocationSettingsAndStartGeofence()
         }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON ) {
+            if(resultCode == Activity.RESULT_OK){
+                Log.i(
+                    TAG,
+                    "REQUEST_TURN_DEVICE_LOCATION_ON SUCCESS!"
+                )
+            }else{
+                Log.i(
+                    TAG,
+                    "REQUEST_TURN_DEVICE_LOCATION_ON FAIL!"
+                )
+            }
+        }
+
     }
 
     override fun onDestroy() {
@@ -232,8 +244,7 @@ class SaveReminderFragment : BaseFragment() {
             }
             else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
         }
-        ActivityCompat.requestPermissions(
-            requireActivity(),
+        requestPermissions(
             permissionsArray,
             resultCode
         )
@@ -250,8 +261,7 @@ class SaveReminderFragment : BaseFragment() {
         locationSettingsResponseTask.addOnFailureListener { exception ->
             if (exception is ResolvableApiException && resolve){
                 try {
-                    exception.startResolutionForResult(requireActivity(),
-                        REQUEST_TURN_DEVICE_LOCATION_ON)
+                    startIntentSenderForResult(exception.resolution.intentSender, REQUEST_TURN_DEVICE_LOCATION_ON, null, 0, 0, 0, null)
                 } catch (sendEx: IntentSender.SendIntentException) {
                     Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
                 }
