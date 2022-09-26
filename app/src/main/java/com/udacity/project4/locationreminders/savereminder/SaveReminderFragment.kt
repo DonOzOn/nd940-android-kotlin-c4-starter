@@ -48,6 +48,7 @@ class SaveReminderFragment : BaseFragment() {
     companion object {
         private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
         private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
+        private const val REQUEST_BACKGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 35
         private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
         private const val LOCATION_PERMISSION_INDEX = 0
         private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
@@ -133,17 +134,48 @@ class SaveReminderFragment : BaseFragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON ) {
-            if(resultCode == Activity.RESULT_OK){
-                Log.i(
-                    TAG,
-                    "REQUEST_TURN_DEVICE_LOCATION_ON SUCCESS!"
-                )
+            var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+
+            val foregroundLocationApproved = (
+                    PackageManager.PERMISSION_GRANTED ==
+                            ActivityCompat.checkSelfPermission(requireContext(),
+                                Manifest.permission.ACCESS_FINE_LOCATION))
+            val backgroundPermissionApproved =
+                if (runningQOrLater) {
+                    PackageManager.PERMISSION_GRANTED ==
+                            ActivityCompat.checkSelfPermission(
+                                requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                            )
+                } else {
+                    true
+                }
+
+            if(foregroundLocationApproved && backgroundPermissionApproved){
+                if(resultCode == Activity.RESULT_OK){
+                    addGeofence(LatLng(reminderData.latitude!!, reminderData.longitude!!), reminderData.id!!)
+                    Log.i(
+                        TAG,
+                        "REQUEST_TURN_DEVICE_LOCATION_ON SUCCESS!"
+                    )
+                }else{
+                    checkDeviceLocationSettingsAndStartGeofence()
+                }
             }else{
-                Log.i(
-                    TAG,
-                    "REQUEST_TURN_DEVICE_LOCATION_ON FAIL!"
-                )
+                if(!foregroundLocationApproved){
+                    requestPermissions(
+                        permissionsArray,
+                        REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
+                    )
+                }
+                if(!backgroundPermissionApproved){
+                    permissionsArray = arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    requestPermissions(
+                        permissionsArray,
+                        REQUEST_BACKGROUND_ONLY_PERMISSIONS_REQUEST_CODE
+                    )
+                }
             }
+
         }
 
     }
@@ -269,11 +301,11 @@ class SaveReminderFragment : BaseFragment() {
                 // Explain user why app needs this permission
             }
         }
-        locationSettingsResponseTask.addOnCompleteListener {
-            if ( it.isSuccessful ) {
-                addGeofence(LatLng(reminderData.latitude!!, reminderData.longitude!!), reminderData.id!!)
-            }
-        }
+//        locationSettingsResponseTask.addOnCompleteListener {
+//            if ( it.isSuccessful ) {
+//                addGeofence(LatLng(reminderData.latitude!!, reminderData.longitude!!), reminderData.id!!)
+//            }
+//        }
     }
 
     /**
